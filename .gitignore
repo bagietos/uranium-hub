@@ -1,0 +1,54 @@
+# Roblox Script Hub .gitignore
+
+# OS Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Lua
+*.out
+*.o
+
+# Local Configuration (user-specific)
+local_config.lua
+user_settings.json
+
+# Logs
+*.log
+logs/
+
+# Build
+build/
+dist/
+*.zip
+
+# Dependencies (if using package manager)
+packages/
+node_modules/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Private keys
+*.key
+*.pem
+private/
+
+# Cache
+.cache/
+__pycache__/
+
+# System files
+.env
+.env.local
+.env.*.local
