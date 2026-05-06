@@ -38,18 +38,27 @@ local RootPart = Character:WaitForChild("HumanoidRootPart")
 
 local ObsidianUI
 local function LoadObsidianUI()
-    local response = syn.request({
-        Url = "https://raw.githubusercontent.com/infyiff/Obsidian/main/ObsidianUI.lua",
-        Method = "GET"
-    })
+    local urls = {
+        "https://raw.githubusercontent.com/ViktorVaughn/Obsidian-UI/main/Obsidian%20UI.lua",
+        "https://raw.githubusercontent.com/infyiff/Obsidian/main/ObsidianUI.lua"
+    }
     
-    if response.StatusCode == 200 then
-        ObsidianUI = loadstring(response.Body)()
-        return true
-    else
-        warn("Failed to load Obsidian UI library")
-        return false
+    for _, url in ipairs(urls) do
+        local response = syn.request({
+            Url = url,
+            Method = "GET"
+        })
+        
+        if response.StatusCode == 200 then
+            ObsidianUI = loadstring(response.Body)()
+            if ObsidianUI then
+                return true
+            end
+        end
     end
+    
+    warn("Failed to load Obsidian UI library from all sources")
+    return false
 end
 
 -- Attempt to load UI library

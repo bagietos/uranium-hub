@@ -53,7 +53,8 @@ Config.Features = {
 -- ============================================================================
 
 Config.ObsidianUI = {
-    Repository = "https://raw.githubusercontent.com/infyiff/Obsidian/main/ObsidianUI.lua",
+    Repository = "https://raw.githubusercontent.com/ViktorVaughn/Obsidian-UI/main/Obsidian%20UI.lua",
+    Fallback = "https://pastefy.app/code/raw/raw",
     Timeout = 10,
 }
 

@@ -32,7 +32,10 @@ local UIToggles = {}
 local function LoadObsidianUI()
     print(Config.Messages.LoadingUI)
     
-    ObsidianUILibrary = Helpers.LoadFromUrl(Config.ObsidianUI.Repository)
+    ObsidianUILibrary = Helpers.LoadFromUrl(
+        Config.ObsidianUI.Repository,
+        Config.ObsidianUI.Fallback
+    )
     
     if not ObsidianUILibrary then
         error(Config.Messages.UIFailed)

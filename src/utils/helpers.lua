@@ -14,7 +14,7 @@ local Helpers = {}
     @param url: The URL to load from
     @return: The loaded function or nil if failed
 ]]
-function Helpers.LoadFromUrl(url)
+function Helpers.LoadFromUrl(url, fallbackUrl)
     local success, response = pcall(function()
         return syn.request({
             Url = url,
@@ -22,26 +22,38 @@ function Helpers.LoadFromUrl(url)
         })
     end)
     
-    if not success then
-        warn("Failed to connect to URL: " .. url)
-        return nil
+    if success and response and response.StatusCode == 200 then
+        local loadSuccess, result = pcall(function()
+            return loadstring(response.Body)()
+        end)
+        
+        if loadSuccess and result then
+            return result
+        end
     end
     
-    if response.StatusCode ~= 200 then
-        warn("HTTP Error: " .. response.StatusCode)
-        return nil
+    -- Try fallback URL if available
+    if fallbackUrl then
+        local fallbackSuccess, fallbackResponse = pcall(function()
+            return syn.request({
+                Url = fallbackUrl,
+                Method = "GET"
+            })
+        end)
+        
+        if fallbackSuccess and fallbackResponse and fallbackResponse.StatusCode == 200 then
+            local loadSuccess, result = pcall(function()
+                return loadstring(fallbackResponse.Body)()
+            end)
+            
+            if loadSuccess and result then
+                return result
+            end
+        end
     end
     
-    local loadSuccess, result = pcall(function()
-        return loadstring(response.Body)()
-    end)
-    
-    if not loadSuccess then
-        warn("Failed to load code from: " .. url)
-        return nil
-    end
-    
-    return result
+    warn("Failed to load from URL: " .. url)
+    return nil
 end
 
 -- ============================================================================
