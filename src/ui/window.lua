@@ -16,16 +16,18 @@ local UIWindow = {}
     @param ObsidianUI: The loaded Obsidian UI library
     @return: Window object
 ]]
-function UIWindow:Create(ObsidianUI)
-    local Window = ObsidianUI:CreateWindow({
+function UIWindow:Create(Rayfield)
+    local Window = Rayfield:CreateWindow({
         Name = Config.UI.Name,
-        Size = Config.UI.WindowSize,
-        HasClosing = Config.UI.HasClosing,
-        HasMinimizing = Config.UI.HasMinimizing,
-        Draggable = Config.UI.Draggable,
-        ShowHideKey = Config.Keybinds.ToggleMenu
+        LoadingTitle = "Uranium Hub",
+        LoadingSubtitle = "Loading...",
+        Theme = "Default",
+        DisableRayfieldPrompts = false,
+        DisableBuildWarnings = true,
+        ConfigurationSaving = { Enabled = false },
+        KeySystem = false,
     })
-    
+
     return Window
 end
 

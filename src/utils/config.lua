@@ -49,13 +49,12 @@ Config.Features = {
 }
 
 -- ============================================================================
--- OBSIDIAN UI SETTINGS
+-- RAYFIELD UI SETTINGS
 -- ============================================================================
 
-Config.ObsidianUI = {
-    Repository = "https://raw.githubusercontent.com/ViktorVaughn/Obsidian-UI/main/Obsidian%20UI.lua",
-    Fallback = "https://pastefy.app/code/raw/raw",
-    Timeout = 10,
+Config.Rayfield = {
+    Repository = "https://sirius.menu/rayfield",
+    Theme = "Default",
 }
 
 -- ============================================================================
@@ -73,7 +72,7 @@ Config.Icons = {
 -- ============================================================================
 
 Config.Messages = {
-    LoadingUI = "[Uranium Hub] Loading Obsidian UI Library...",
+    LoadingUI = "[Uranium Hub] Loading Rayfield UI Library...",
     UILoaded = "[Uranium Hub] UI Loaded Successfully",
     UIFailed = "[Uranium Hub] Failed to load UI library",
     Initialized = "[Uranium Hub] Initialization complete",

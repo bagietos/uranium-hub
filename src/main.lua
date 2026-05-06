@@ -4,7 +4,6 @@
 ]]
 
 local Config = require(script.Parent.utils.config)
-local Helpers = require(script.Parent.utils.helpers)
 local FeatureManager = require(script.Parent.modules.feature_manager)
 local UIWindow = require(script.Parent.ui.window)
 local UITabs = require(script.Parent.ui.tabs)
@@ -21,26 +20,26 @@ local Character = Player.Character or Player.CharacterAdded:Wait()
 -- GLOBAL STATE
 -- ============================================================================
 
-local ObsidianUILibrary = nil
+local Rayfield = nil
 local MainWindow = nil
 local UIToggles = {}
 
 -- ============================================================================
--- LOAD OBSIDIAN UI LIBRARY
+-- LOAD RAYFIELD UI LIBRARY
 -- ============================================================================
 
-local function LoadObsidianUI()
+local function LoadRayfield()
     print(Config.Messages.LoadingUI)
-    
-    ObsidianUILibrary = Helpers.LoadFromUrl(
-        Config.ObsidianUI.Repository,
-        Config.ObsidianUI.Fallback
-    )
-    
-    if not ObsidianUILibrary then
+
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet(Config.Rayfield.Repository))()
+    end)
+
+    if not success or not result then
         error(Config.Messages.UIFailed)
     end
-    
+
+    Rayfield = result
     print(Config.Messages.UILoaded)
     return true
 end
@@ -51,7 +50,7 @@ end
 
 local function CreateMainInterface()
     -- Create main window
-    MainWindow = UIWindow:Create(ObsidianUILibrary)
+    MainWindow = UIWindow:Create(Rayfield)
     
     -- Create tabs
     local movementTabData = UITabs:CreateMovementTab(MainWindow)
@@ -73,7 +72,7 @@ local function Initialize()
     print("[Uranium Hub] Starting initialization...")
     
     -- Load UI library
-    LoadObsidianUI()
+    LoadRayfield()
     
     -- Initialize feature manager
     FeatureManager:Initialize(Character)
