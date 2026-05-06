@@ -52,15 +52,26 @@ print("[Uranium Hub] UI Loaded Successfully")
 -- NOCLIP MODULE
 -- ============================================================================
 
-local Noclip = { Enabled = false, Connection = nil }
+local Noclip = { Enabled = false, Connection = nil, OriginalCollide = {} }
 
 function Noclip:Enable()
     if self.Enabled then return end
     self.Enabled = true
+
+    -- cache original CanCollide values
+    self.OriginalCollide = {}
+    for _, part in pairs(Character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            self.OriginalCollide[part] = part.CanCollide
+        end
+    end
+
     self.Connection = RunService.Stepped:Connect(function()
         if not self.Enabled then return end
         for _, part in pairs(Character:GetDescendants()) do
-            if part:IsA("BasePart") then part.CanCollide = false end
+            if part:IsA("BasePart") and part.CanCollide then
+                part.CanCollide = false
+            end
         end
     end)
 end
@@ -73,59 +84,93 @@ function Noclip:Disable()
         self.Connection = nil
     end
     for _, part in pairs(Character:GetDescendants()) do
-        if part:IsA("BasePart") then part.CanCollide = true end
+        if part:IsA("BasePart") then
+            part.CanCollide = self.OriginalCollide[part] ~= false
+        end
     end
+    self.OriginalCollide = {}
 end
 
 -- ============================================================================
 -- FLY MODULE
 -- ============================================================================
 
-local Fly = { Enabled = false, Speed = 50, Connection = nil, BodyVelocity = nil }
+local Fly = {
+    Enabled = false,
+    Speed = 50,
+    Connection = nil,
+    BodyVelocity = nil,
+    BodyGyro = nil,
+}
 
 function Fly:Enable()
     if self.Enabled then return end
     self.Enabled = true
 
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    bodyVelocity.Parent = RootPart
-    self.BodyVelocity = bodyVelocity
+    local humanoid = Character:FindFirstChildOfClass("Humanoid")
+    local camera = workspace.CurrentCamera
 
-    local velocityDirection = Vector3.new(0, 0, 0)
+    -- BodyVelocity — kontrola ruchu
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.zero
+    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    bv.P = 1e4
+    bv.Parent = RootPart
+    self.BodyVelocity = bv
 
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed or not self.Enabled then return end
-        if input.KeyCode == Enum.KeyCode.W then
-            velocityDirection = velocityDirection + Character.PrimaryPart.CFrame.LookVector
-        elseif input.KeyCode == Enum.KeyCode.S then
-            velocityDirection = velocityDirection - Character.PrimaryPart.CFrame.LookVector
-        elseif input.KeyCode == Enum.KeyCode.A then
-            velocityDirection = velocityDirection - Character.PrimaryPart.CFrame.RightVector
-        elseif input.KeyCode == Enum.KeyCode.D then
-            velocityDirection = velocityDirection + Character.PrimaryPart.CFrame.RightVector
-        elseif input.KeyCode == Enum.KeyCode.Space then
-            velocityDirection = velocityDirection + Vector3.new(0, 1, 0)
-        elseif input.KeyCode == Enum.KeyCode.LeftControl then
-            velocityDirection = velocityDirection - Vector3.new(0, 1, 0)
-        end
-    end)
+    -- BodyGyro — obrót postaci w kierunku kamery
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+    bg.P = 1e4
+    bg.D = 100
+    bg.CFrame = RootPart.CFrame
+    bg.Parent = RootPart
+    self.BodyGyro = bg
 
     self.Connection = RunService.RenderStepped:Connect(function()
-        if not self.Enabled or not bodyVelocity then return end
-        if velocityDirection.Magnitude > 0 then
-            bodyVelocity.Velocity = velocityDirection.Unit * self.Speed
-        else
-            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+        if not self.Enabled then return end
+
+        -- animacja siedzenia podczas lotu
+        if humanoid then humanoid.Sit = true end
+
+        -- kierunek ruchu względem kamery (nie postaci)
+        local moveDir = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDir += camera.CFrame.LookVector
         end
-        velocityDirection = velocityDirection * 0.9
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDir -= camera.CFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDir -= camera.CFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDir += camera.CFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            moveDir += Vector3.new(0, 1, 0)
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            moveDir -= Vector3.new(0, 1, 0)
+        end
+
+        if moveDir.Magnitude > 0 then
+            bv.Velocity = moveDir.Unit * self.Speed
+            -- obróć postać w poziomie w stronę ruchu
+            local flat = Vector3.new(moveDir.X, 0, moveDir.Z)
+            if flat.Magnitude > 0 then
+                bg.CFrame = CFrame.new(Vector3.zero, flat)
+            end
+        else
+            bv.Velocity = Vector3.zero
+        end
     end)
 end
 
 function Fly:Disable()
     if not self.Enabled then return end
     self.Enabled = false
+
     if self.Connection then
         self.Connection:Disconnect()
         self.Connection = nil
@@ -134,6 +179,13 @@ function Fly:Disable()
         self.BodyVelocity:Destroy()
         self.BodyVelocity = nil
     end
+    if self.BodyGyro then
+        self.BodyGyro:Destroy()
+        self.BodyGyro = nil
+    end
+
+    local humanoid = Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then humanoid.Sit = false end
 end
 
 -- ============================================================================

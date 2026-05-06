@@ -50,14 +50,23 @@ local Features = {
 -- ============================================================================
 
 local NoclipModule = {}
+local NoclipOriginal = {}
 
 function NoclipModule.Enable()
     if Features.Noclip.Enabled then return end
     Features.Noclip.Enabled = true
+
+    NoclipOriginal = {}
+    for _, part in pairs(Character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            NoclipOriginal[part] = part.CanCollide
+        end
+    end
+
     Features.Noclip.Connection = RunService.Stepped:Connect(function()
         if not Features.Noclip.Enabled then return end
         for _, part in pairs(Character:GetDescendants()) do
-            if part:IsA("BasePart") then
+            if part:IsA("BasePart") and part.CanCollide then
                 part.CanCollide = false
             end
         end
@@ -73,9 +82,10 @@ function NoclipModule.Disable()
     end
     for _, part in pairs(Character:GetDescendants()) do
         if part:IsA("BasePart") then
-            part.CanCollide = true
+            part.CanCollide = NoclipOriginal[part] ~= false
         end
     end
+    NoclipOriginal = {}
 end
 
 -- ============================================================================
@@ -83,44 +93,65 @@ end
 -- ============================================================================
 
 local FlyModule = {}
+local FlyBodyVelocity = nil
+local FlyBodyGyro = nil
 
 function FlyModule.Enable()
     if Features.Fly.Enabled then return end
     Features.Fly.Enabled = true
 
-    local bodyVelocity = Instance.new("BodyVelocity")
-    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
-    bodyVelocity.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    bodyVelocity.Parent = RootPart
-    Features.Fly.BodyVelocity = bodyVelocity
+    local humanoid = Character:FindFirstChildOfClass("Humanoid")
+    local camera = workspace.CurrentCamera
 
-    local velocityDirection = Vector3.new(0, 0, 0)
+    local bv = Instance.new("BodyVelocity")
+    bv.Velocity = Vector3.zero
+    bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+    bv.P = 1e4
+    bv.Parent = RootPart
+    FlyBodyVelocity = bv
 
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if gameProcessed or not Features.Fly.Enabled then return end
-        if input.KeyCode == Enum.KeyCode.W then
-            velocityDirection = velocityDirection + Character.PrimaryPart.CFrame.LookVector
-        elseif input.KeyCode == Enum.KeyCode.S then
-            velocityDirection = velocityDirection - Character.PrimaryPart.CFrame.LookVector
-        elseif input.KeyCode == Enum.KeyCode.A then
-            velocityDirection = velocityDirection - Character.PrimaryPart.CFrame.RightVector
-        elseif input.KeyCode == Enum.KeyCode.D then
-            velocityDirection = velocityDirection + Character.PrimaryPart.CFrame.RightVector
-        elseif input.KeyCode == Enum.KeyCode.Space then
-            velocityDirection = velocityDirection + Vector3.new(0, 1, 0)
-        elseif input.KeyCode == Enum.KeyCode.LeftControl then
-            velocityDirection = velocityDirection - Vector3.new(0, 1, 0)
-        end
-    end)
+    local bg = Instance.new("BodyGyro")
+    bg.MaxTorque = Vector3.new(1e5, 1e5, 1e5)
+    bg.P = 1e4
+    bg.D = 100
+    bg.CFrame = RootPart.CFrame
+    bg.Parent = RootPart
+    FlyBodyGyro = bg
 
     Features.Fly.Connection = RunService.RenderStepped:Connect(function()
-        if not Features.Fly.Enabled or not bodyVelocity then return end
-        if velocityDirection.Magnitude > 0 then
-            bodyVelocity.Velocity = velocityDirection.Unit * Features.Fly.Speed
-        else
-            bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+        if not Features.Fly.Enabled then return end
+
+        if humanoid then humanoid.Sit = true end
+
+        local moveDir = Vector3.zero
+        if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+            moveDir += camera.CFrame.LookVector
         end
-        velocityDirection = velocityDirection * 0.9
+        if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+            moveDir -= camera.CFrame.LookVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+            moveDir -= camera.CFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+            moveDir += camera.CFrame.RightVector
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+            moveDir += Vector3.new(0, 1, 0)
+        end
+        if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+            moveDir -= Vector3.new(0, 1, 0)
+        end
+
+        if moveDir.Magnitude > 0 then
+            bv.Velocity = moveDir.Unit * Features.Fly.Speed
+            local flat = Vector3.new(moveDir.X, 0, moveDir.Z)
+            if flat.Magnitude > 0 then
+                bg.CFrame = CFrame.new(Vector3.zero, flat)
+            end
+        else
+            bv.Velocity = Vector3.zero
+        end
     end)
 end
 
@@ -131,10 +162,16 @@ function FlyModule.Disable()
         Features.Fly.Connection:Disconnect()
         Features.Fly.Connection = nil
     end
-    if Features.Fly.BodyVelocity then
-        Features.Fly.BodyVelocity:Destroy()
-        Features.Fly.BodyVelocity = nil
+    if FlyBodyVelocity then
+        FlyBodyVelocity:Destroy()
+        FlyBodyVelocity = nil
     end
+    if FlyBodyGyro then
+        FlyBodyGyro:Destroy()
+        FlyBodyGyro = nil
+    end
+    local humanoid = Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then humanoid.Sit = false end
 end
 
 -- ============================================================================
