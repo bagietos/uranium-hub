@@ -27,11 +27,7 @@ function UITabs:CreateMovementTab(window)
         CurrentValue = Config.Features.Noclip.DefaultEnabled,
         Flag = "NoclipToggle",
         Callback = function(Value)
-            if Value then
-                FeatureManager:ToggleNoclip()
-            else
-                FeatureManager:ToggleNoclip()
-            end
+            FeatureManager:SetNoclip(Value)
         end,
     })
     MovementTab:CreateLabel(Config.Features.Noclip.Description)
@@ -42,11 +38,7 @@ function UITabs:CreateMovementTab(window)
         CurrentValue = Config.Features.Fly.DefaultEnabled,
         Flag = "FlyToggle",
         Callback = function(Value)
-            if Value then
-                FeatureManager:ToggleFly()
-            else
-                FeatureManager:ToggleFly()
-            end
+            FeatureManager:SetFly(Value)
         end,
     })
     MovementTab:CreateLabel(Config.Features.Fly.Description)

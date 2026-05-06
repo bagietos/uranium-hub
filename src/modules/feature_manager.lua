@@ -33,10 +33,34 @@ function FeatureManager:ToggleNoclip()
 end
 
 --[[
+    SetNoclip: Enable or disable noclip directly
+    @param enabled: Boolean
+]]
+function FeatureManager:SetNoclip(enabled)
+    if enabled then
+        Noclip:Enable()
+    else
+        Noclip:Disable()
+    end
+end
+
+--[[
     ToggleFly: Toggle fly feature
 ]]
 function FeatureManager:ToggleFly()
     Fly:Toggle()
+end
+
+--[[
+    SetFly: Enable or disable fly directly
+    @param enabled: Boolean
+]]
+function FeatureManager:SetFly(enabled)
+    if enabled then
+        Fly:Enable()
+    else
+        Fly:Disable()
+    end
 end
 
 -- ============================================================================
